@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>dj dao · producer</title>
+  <meta name="description" content="dj dao 道 is a creative whose canvas is consciousness itself." />
+
+  <!-- Social preview -->
+  <meta property="og:title" content="dj dao 道" />
+  <meta property="og:description" content="dj dao 道 is a creative whose canvas is consciousness itself." />
+  <meta property="og:type" content="website" />
+  <!-- optional later: <meta property="og:image" content="https://djdao.music/assets/og.webp" /> -->
+
+  <meta name="theme-color" content="#000000" />
+
+  <!-- Minimal font. System stack first for speed -->
+  <style>
+    :root{
+      --bg:#000;
+      --fg:#f5f5f5;
+      --muted:rgba(245,245,245,.62);
+      --faint:rgba(245,245,245,.12);
+      --line:rgba(245,245,245,.16);
+      --accent:#b7a6ff; /* mystic hint */
+      --max:1040px;
+      --r:18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      line-height:1.55;
+      letter-spacing:.2px;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    a{color:inherit; text-decoration:none}
+    a:focus-visible, button:focus-visible{
+      outline:2px solid var(--accent);
+      outline-offset:3px;
+      border-radius:10px;
+    }
+
+    /* subtle mystic field. cheap to render */
+    .field{
+      position:fixed; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(800px 500px at 20% 15%, rgba(183,166,255,.14), transparent 60%),
+        radial-gradient(700px 420px at 85% 30%, rgba(183,166,255,.10), transparent 60%),
+        radial-gradient(900px 600px at 55% 95%, rgba(255,255,255,.06), transparent 65%);
+      filter:saturate(1.08);
+      opacity:.85;
+    }
+
+    .wrap{position:relative; min-height:100%}
+    .container{max-width:var(--max); margin:0 auto; padding:28px 20px 64px}
+    @media (min-width: 760px){ .container{padding:42px 28px 80px} }
+
+    header{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:16px;
+      padding:8px 0 24px;
+    }
+
+    .mark{
+      display:flex; align-items:center; gap:10px;
+      font-weight:600;
+      letter-spacing:.6px;
+    }
+
+    .sig{
+      width:10px; height:10px; border-radius:999px;
+      background:var(--accent);
+      box-shadow: 0 0 22px rgba(183,166,255,.55);
+      flex:0 0 auto;
+    }
+
+    nav{
+      display:flex; gap:14px; flex-wrap:wrap;
+      color:var(--muted);
+      font-size:14px;
+    }
+    nav a{padding:8px 10px; border-radius:999px}
+    nav a:hover{background:rgba(245,245,245,.06); color:var(--fg)}
+
+    .hero{
+      padding:34px 0 30px;
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+    }
+
+    .kicker{
+      color:var(--muted);
+      font-size:13px;
+      letter-spacing:.22em;
+      text-transform:uppercase;
+    }
+
+    h1{
+      margin:12px 0 10px;
+      font-size:40px;
+      line-height:1.08;
+      letter-spacing:-.02em;
+      font-weight:650;
+    }
+    @media (min-width: 760px){ h1{font-size:56px} }
+
+    .sub{
+      max-width:64ch;
+      color:var(--muted);
+      font-size:16px;
+      margin:0 0 20px;
+    }
+
+    .sub strong{
+      color:var(--fg);
+      font-weight:600;
+    }
+
+    .ctaRow{
+      display:flex; gap:12px; flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .btn{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:11px 14px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(245,245,245,.04);
+      color:var(--fg);
+      font-size:14px;
+      transition:transform .08s ease, background .18s ease, border-color .18s ease;
+      user-select:none;
+    }
+    .btn:hover{background:rgba(245,245,245,.07); border-color:rgba(245,245,245,.26)}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{
+      border-color:rgba(183,166,255,.55);
+      background:rgba(183,166,255,.10);
+    }
+    .btn.primary:hover{background:rgba(183,166,255,.16)}
+    .btn .dot{
+      width:7px; height:7px; border-radius:999px;
+      background:var(--accent);
+      box-shadow: 0 0 18px rgba(183,166,255,.55);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+      padding:26px 0;
+    }
+    @media (min-width: 860px){
+      .grid{grid-template-columns: 1.2fr .8fr}
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background:rgba(245,245,245,.03);
+      border-radius:var(--r);
+      padding:16px 16px 14px;
+      overflow:hidden;
+    }
+
+    .card h2{
+      margin:0 0 8px;
+      font-size:14px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:var(--muted);
+      font-weight:650;
+    }
+
+    .card p{
+      margin:0;
+      color:var(--fg);
+      font-size:16px;
+    }
+
+    .list{
+      margin:12px 0 0;
+      padding:0;
+      list-style:none;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .list a{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(245,245,245,.10);
+      background:rgba(245,245,245,.02);
+      color:var(--fg);
+      font-size:14px;
+    }
+    .list a:hover{
+      background:rgba(245,245,245,.05);
+      border-color:rgba(245,245,245,.20);
+    }
+    .chev{color:var(--muted)}
+
+    footer{
+      padding:22px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      border-top:1px solid var(--line);
+      margin-top:10px;
+    }
+
+    .tiny{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      border:1px solid rgba(245,245,245,.12);
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(245,245,245,.02);
+    }
+
+    /* reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      .btn{transition:none}
+      .field{filter:none}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="field" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <div class="container">
+      <header>
+        <div class="mark" aria-label="dj dao">
+          <span class="sig" aria-hidden="true"></span>
+          <span>dj dao <span style="color:var(--muted); font-weight:500">道</span></span>
+        </div>
+
+        <nav>
+          <a href="#work">work</a>
+          <a href="#listen">listen</a>
+          <a href="#contact">contact</a>
+        </nav>
+      </header>
+
+      <section class="hero" id="top">
+        <div class="kicker">minimal · cinematic · high-intent</div>
+        <h1>black canvas. bright signal.</h1>
+        <p class="sub">
+          <strong>dj dao 道 is a creative whose canvas is consciousness itself.</strong>
+          club music with restraint. texture over noise. intention over excess.
+        </p>
+
+        <div class="ctaRow">
+          <a class="btn primary" href="#listen"><span class="dot" aria-hidden="true"></span>listen</a>
+          <a class="btn" href="#contact">bookings</a>
+          <a class="btn" href="#work">press kit</a>
+        </div>
+      </section>
+
+      <section class="grid" id="work">
+        <div class="card">
+          <h2>signature</h2>
+          <p>
+            dark minimalism with a mystic edge. hypnotic grooves. negative space that hits.
+          </p>
+          <p style="margin-top:10px; color:var(--muted); font-size:14px">
+            genres / tags: minimal house, techno, leftfield club, ambient interludes
+          </p>
+        </div>
+
+        <div class="card" id="listen">
+          <h2>links</h2>
+          <ul class="list">
+            <li><a href="#" target="_blank" rel="noopener">soundcloud <span class="chev">↗</span></a></li>
+            <li><a href="#" target="_blank" rel="noopener">spotify <span class="chev">↗</span></a></li>
+            <li><a href="#" target="_blank" rel="noopener">youtube <span class="chev">↗</span></a></li>
+            <li><a href="#" target="_blank" rel="noopener">mixes / sets <span class="chev">↗</span></a></li>
+          </ul>
+          <p style="margin-top:10px; color:var(--muted); font-size:13px">
+            replace the # links with your real profiles. keep it sparse.
+          </p>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1" id="contact">
+          <h2>contact</h2>
+          <p>
+            for bookings, collaborations, and weird beautiful ideas:
+            <a href="mailto:bookings@djdao.music" style="color:var(--fg); text-decoration:underline; text-underline-offset:3px;">
+              bookings@djdao.music
+            </a>
+          </p>
+          <div class="tiny" style="margin-top:12px">
+            <span class="pill">based in australia</span>
+            <span class="pill">available worldwide</span>
+            <span class="pill">fast replies</span>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <div>© <span id="y"></span> dj dao</div>
+        <div class="tiny">
+          <span class="pill">djdao.music</span>
+          <a class="pill" href="#top" style="color:var(--muted)">back to top ↑</a>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // tiny enhancement. safe, no dependencies
+    document.getElementById("y").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
