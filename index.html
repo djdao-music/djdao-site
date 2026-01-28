@@ -1,337 +1,656 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dj dao · consciousness in motion</title>
+  <meta name="description" content="dj dao — a creative whose canvas is consciousness itself. music is medicine. dance is medicine.">
 
-  <title>dj dao · producer</title>
-  <meta name="description" content="dj dao 道 is a creative whose canvas is consciousness itself." />
+  <meta property="og:title" content="dj dao">
+  <meta property="og:description" content="a creative whose canvas is consciousness itself">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#000000">
 
-  <!-- Social preview -->
-  <meta property="og:title" content="dj dao 道" />
-  <meta property="og:description" content="dj dao 道 is a creative whose canvas is consciousness itself." />
-  <meta property="og:type" content="website" />
-  <!-- optional later: <meta property="og:image" content="https://djdao.music/assets/og.webp" /> -->
+  <!-- Fonts: Refined display + elegant body -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Ma+Shan+Zheng&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
 
-  <meta name="theme-color" content="#000000" />
-
-  <!-- Minimal font. System stack first for speed -->
   <style>
-    :root{
-      --bg:#000;
-      --fg:#f5f5f5;
-      --muted:rgba(245,245,245,.62);
-      --faint:rgba(245,245,245,.12);
-      --line:rgba(245,245,245,.16);
-      --accent:#b7a6ff; /* mystic hint */
-      --max:1040px;
-      --r:18px;
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --off-white: #f8f8f8;
+      --silver: #c0c0c0;
+      --dim: rgba(255,255,255,0.5);
+      --faint: rgba(255,255,255,0.08);
+      --glow: rgba(255,255,255,0.03);
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      line-height:1.55;
-      letter-spacing:.2px;
-      -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    a{color:inherit; text-decoration:none}
-    a:focus-visible, button:focus-visible{
-      outline:2px solid var(--accent);
-      outline-offset:3px;
-      border-radius:10px;
+    html {
+      scroll-behavior: smooth;
     }
 
-    /* subtle mystic field. cheap to render */
-    .field{
-      position:fixed; inset:0;
-      pointer-events:none;
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Atmospheric background layers */
+    .atmosphere {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .atmosphere::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
       background:
-        radial-gradient(800px 500px at 20% 15%, rgba(183,166,255,.14), transparent 60%),
-        radial-gradient(700px 420px at 85% 30%, rgba(183,166,255,.10), transparent 60%),
-        radial-gradient(900px 600px at 55% 95%, rgba(255,255,255,.06), transparent 65%);
-      filter:saturate(1.08);
-      opacity:.85;
+        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(255,255,255,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,255,255,0.03) 0%, transparent 50%),
+        radial-gradient(ellipse 100% 80% at 50% 50%, rgba(255,255,255,0.015) 0%, transparent 70%);
+      animation: drift 30s ease-in-out infinite;
     }
 
-    .wrap{position:relative; min-height:100%}
-    .container{max-width:var(--max); margin:0 auto; padding:28px 20px 64px}
-    @media (min-width: 760px){ .container{padding:42px 28px 80px} }
-
-    header{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:16px;
-      padding:8px 0 24px;
+    .atmosphere::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%);
     }
 
-    .mark{
-      display:flex; align-items:center; gap:10px;
-      font-weight:600;
-      letter-spacing:.6px;
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(2%, 1%) rotate(0.5deg); }
+      50% { transform: translate(-1%, 2%) rotate(-0.3deg); }
+      75% { transform: translate(-2%, -1%) rotate(0.2deg); }
     }
 
-    .sig{
-      width:10px; height:10px; border-radius:999px;
-      background:var(--accent);
-      box-shadow: 0 0 22px rgba(183,166,255,.55);
-      flex:0 0 auto;
+    /* Grain texture overlay */
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     }
 
-    nav{
-      display:flex; gap:14px; flex-wrap:wrap;
-      color:var(--muted);
-      font-size:14px;
-    }
-    nav a{padding:8px 10px; border-radius:999px}
-    nav a:hover{background:rgba(245,245,245,.06); color:var(--fg)}
-
-    .hero{
-      padding:34px 0 30px;
-      border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line);
+    /* Main content wrapper */
+    .main {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    .kicker{
-      color:var(--muted);
-      font-size:13px;
-      letter-spacing:.22em;
-      text-transform:uppercase;
+    /* Hero section */
+    .hero {
+      min-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 140px 24px 40px;
+      position: relative;
     }
 
-    h1{
-      margin:12px 0 10px;
-      font-size:40px;
-      line-height:1.08;
-      letter-spacing:-.02em;
-      font-weight:650;
-    }
-    @media (min-width: 760px){ h1{font-size:56px} }
-
-    .sub{
-      max-width:64ch;
-      color:var(--muted);
-      font-size:16px;
-      margin:0 0 20px;
+    @media (max-width: 600px) {
+      .hero {
+        padding: 110px 24px 40px;
+      }
     }
 
-    .sub strong{
-      color:var(--fg);
-      font-weight:600;
+    /* Logo placeholder */
+    .logo-container {
+      width: 146px;
+      height: 146px;
+      margin-bottom: 48px;
+      position: relative;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 0.2s forwards;
     }
 
-    .ctaRow{
-      display:flex; gap:12px; flex-wrap:wrap;
-      margin-top:10px;
+    .logo-placeholder {
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 70%);
     }
 
-    .btn{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:11px 14px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(245,245,245,.04);
-      color:var(--fg);
-      font-size:14px;
-      transition:transform .08s ease, background .18s ease, border-color .18s ease;
-      user-select:none;
-    }
-    .btn:hover{background:rgba(245,245,245,.07); border-color:rgba(245,245,245,.26)}
-    .btn:active{transform:translateY(1px)}
-    .btn.primary{
-      border-color:rgba(183,166,255,.55);
-      background:rgba(183,166,255,.10);
-    }
-    .btn.primary:hover{background:rgba(183,166,255,.16)}
-    .btn .dot{
-      width:7px; height:7px; border-radius:999px;
-      background:var(--accent);
-      box-shadow: 0 0 18px rgba(183,166,255,.55);
+    .logo-placeholder::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: xor;
+      -webkit-mask-composite: xor;
+      padding: 1px;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:14px;
-      padding:26px 0;
-    }
-    @media (min-width: 860px){
-      .grid{grid-template-columns: 1.2fr .8fr}
+    .logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 50%;
     }
 
-    .card{
-      border:1px solid var(--line);
-      background:rgba(245,245,245,.03);
-      border-radius:var(--r);
-      padding:16px 16px 14px;
-      overflow:hidden;
+    .logo-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
     }
 
-    .card h2{
-      margin:0 0 8px;
-      font-size:14px;
-      letter-spacing:.16em;
-      text-transform:uppercase;
-      color:var(--muted);
-      font-weight:650;
+    /* Typography */
+    .title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(4rem, 15vw, 12rem);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      line-height: 0.9;
+      text-align: center;
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 0.4s forwards;
     }
 
-    .card p{
-      margin:0;
-      color:var(--fg);
-      font-size:16px;
+    .title span {
+      display: block;
+      background: linear-gradient(
+        180deg,
+        var(--white) 0%,
+        var(--silver) 50%,
+        rgba(255,255,255,0.6) 100%
+      );
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .list{
-      margin:12px 0 0;
-      padding:0;
-      list-style:none;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-    .list a{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(245,245,245,.10);
-      background:rgba(245,245,245,.02);
-      color:var(--fg);
-      font-size:14px;
-    }
-    .list a:hover{
-      background:rgba(245,245,245,.05);
-      border-color:rgba(245,245,245,.20);
-    }
-    .chev{color:var(--muted)}
-
-    footer{
-      padding:22px 0 0;
-      color:var(--muted);
-      font-size:13px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-      border-top:1px solid var(--line);
-      margin-top:10px;
+    .title-img {
+      max-width: min(80vw, 500px);
+      height: auto;
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 0.4s forwards;
     }
 
-    .tiny{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
+    .tagline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.35rem, 3.7vw, 1.83rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--dim);
+      text-align: center;
+      max-width: 500px;
+      letter-spacing: 0.02em;
+      margin-bottom: 0;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 0.6s forwards;
     }
 
-    .pill{
-      border:1px solid rgba(245,245,245,.12);
-      padding:6px 10px;
-      border-radius:999px;
-      background:rgba(245,245,245,.02);
+    /* Divider */
+    .divider {
+      width: 1px;
+      height: 80px;
+      background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+      margin: 60px auto;
+      opacity: 0;
+      animation: fadeIn 1.5s ease-out 0.8s forwards;
     }
 
-    /* reduce motion */
-    @media (prefers-reduced-motion: reduce){
-      .btn{transition:none}
-      .field{filter:none}
+    /* Philosophy section */
+    .philosophy {
+      padding: 40px 24px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .mantra {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 1s forwards;
+    }
+
+    .mantra-line {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(0.75rem, 2vw, 0.875rem);
+      font-weight: 400;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-align: center;
+      position: relative;
+    }
+
+    .mantra-line::before,
+    .mantra-line::after {
+      content: '·';
+      margin: 0 1.5em;
+      opacity: 0.4;
+    }
+
+    .statement {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 300;
+      text-align: center;
+      max-width: 700px;
+      line-height: 1.4;
+      color: var(--off-white);
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 1.2s forwards;
+    }
+
+    .statement em {
+      font-style: italic;
+      background: linear-gradient(90deg, var(--white) 0%, var(--silver) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .dao-symbol {
+      font-family: 'Ma Shan Zheng', cursive;
+      font-size: clamp(4rem, 12vw, 7rem);
+      color: var(--white);
+      margin-top: 24px;
+      display: block;
+      text-align: center;
+      opacity: 0;
+      animation: fadeIn 2s ease-out 1.6s forwards;
+    }
+
+    /* Links section */
+    .links-section {
+      padding: 40px 24px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 1.4s forwards;
+    }
+
+    .links-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 32px;
+    }
+
+    .links {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 28px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px;
+      color: var(--white);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .link::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .link:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.25);
+      transform: translateY(-2px);
+      box-shadow:
+        0 10px 40px rgba(0,0,0,0.3),
+        0 0 60px rgba(255,255,255,0.03);
+    }
+
+    .link:hover::before {
+      opacity: 1;
+    }
+
+    .link-icon {
+      width: 20px;
+      height: 20px;
+      opacity: 0.8;
+    }
+
+    .link span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 24px;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: auto;
+    }
+
+    .footer-text {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.25);
+      text-transform: uppercase;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Explore section */
+    .explore-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 120px 24px 160px;
+    }
+
+    .explore-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-style: italic;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .explore-concepts {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .concept {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      font-weight: 300;
+      font-style: italic;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.55);
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+      position: relative;
+      text-align: center;
+    }
+
+    .concept.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .concept::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      width: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transform: translateX(-50%);
+      transition: width 0.6s ease-out 0.3s;
+    }
+
+    .concept.revealed::after {
+      width: 100%;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+      margin-top: 48px;
+      animation: float 3.5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(8px); }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Mobile refinements */
+    @media (max-width: 600px) {
+      .logo-container {
+        width: 122px;
+        height: 122px;
+        margin-bottom: 36px;
+      }
+
+      .divider {
+        height: 60px;
+        margin: 40px auto;
+      }
+
+      .links {
+        flex-direction: column;
+        width: 100%;
+        max-width: 280px;
+      }
+
+      .link {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .explore-section {
+        padding: 80px 24px 120px;
+      }
+
+      .explore-concepts {
+        gap: 12px;
+      }
+
+      .concept {
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
-
 <body>
-  <div class="field" aria-hidden="true"></div>
+  <div class="atmosphere"></div>
+  <div class="grain"></div>
 
-  <div class="wrap">
-    <div class="container">
-      <header>
-        <div class="mark" aria-label="dj dao">
-          <span class="sig" aria-hidden="true"></span>
-          <span>dj dao <span style="color:var(--muted); font-weight:500">道</span></span>
+  <main class="main">
+    <section class="hero">
+      <div class="logo-container">
+        <div class="logo-placeholder">
+          <video
+            class="logo-video"
+            id="logo-video"
+            autoplay
+            loop
+            muted
+            playsinline
+            webkit-playsinline
+            disablepictureinpicture
+            preload="auto"
+          >
+            <source src="assets/djdao-video-logo.mp4" type="video/mp4">
+          </video>
         </div>
+      </div>
 
-        <nav>
-          <a href="#work">work</a>
-          <a href="#listen">listen</a>
-          <a href="#contact">contact</a>
-        </nav>
-      </header>
+      <img src="assets/dj-dao-title.svg" alt="dj dao" class="title-img">
 
-      <section class="hero" id="top">
-        <div class="kicker">minimal · cinematic · high-intent</div>
-        <h1>black canvas. bright signal.</h1>
-        <p class="sub">
-          <strong>dj dao 道 is a creative whose canvas is consciousness itself.</strong>
-          club music with restraint. texture over noise. intention over excess.
-        </p>
+      <p class="tagline">a creative whose canvas is consciousness itself</p>
+    </section>
 
-        <div class="ctaRow">
-          <a class="btn primary" href="#listen"><span class="dot" aria-hidden="true"></span>listen</a>
-          <a class="btn" href="#contact">bookings</a>
-          <a class="btn" href="#work">press kit</a>
-        </div>
-      </section>
+    <section class="explore-section">
+      <span class="explore-label">explore the</span>
+      <div class="explore-concepts">
+        <span class="concept" data-delay="0">Past and Future</span>
+        <span class="concept" data-delay="200">East and West</span>
+        <span class="concept" data-delay="400">as One</span>
+      </div>
+      <div class="scroll-line"></div>
+    </section>
 
-      <section class="grid" id="work">
-        <div class="card">
-          <h2>signature</h2>
-          <p>
-            dark minimalism with a mystic edge. hypnotic grooves. negative space that hits.
-          </p>
-          <p style="margin-top:10px; color:var(--muted); font-size:14px">
-            genres / tags: minimal house, techno, leftfield club, ambient interludes
-          </p>
-        </div>
+    <section class="philosophy">
+      <div class="mantra">
+        <p class="mantra-line">a dj for all people</p>
+        <p class="mantra-line">for all lands</p>
+      </div>
 
-        <div class="card" id="listen">
-          <h2>links</h2>
-          <ul class="list">
-            <li><a href="#" target="_blank" rel="noopener">soundcloud <span class="chev">↗</span></a></li>
-            <li><a href="#" target="_blank" rel="noopener">spotify <span class="chev">↗</span></a></li>
-            <li><a href="#" target="_blank" rel="noopener">youtube <span class="chev">↗</span></a></li>
-            <li><a href="#" target="_blank" rel="noopener">mixes / sets <span class="chev">↗</span></a></li>
-          </ul>
-          <p style="margin-top:10px; color:var(--muted); font-size:13px">
-            replace the # links with your real profiles. keep it sparse.
-          </p>
-        </div>
+      <p class="statement">
+        <em>music is medicine</em><br>
+        <em>dance is medicine</em>
+      </p>
 
-        <div class="card" style="grid-column: 1 / -1" id="contact">
-          <h2>contact</h2>
-          <p>
-            for bookings, collaborations, and weird beautiful ideas:
-            <a href="mailto:bookings@djdao.music" style="color:var(--fg); text-decoration:underline; text-underline-offset:3px;">
-              bookings@djdao.music
-            </a>
-          </p>
-          <div class="tiny" style="margin-top:12px">
-            <span class="pill">based in australia</span>
-            <span class="pill">available worldwide</span>
-            <span class="pill">fast replies</span>
-          </div>
-        </div>
-      </section>
+      <span class="dao-symbol">道</span>
+    </section>
 
-      <footer>
-        <div>© <span id="y"></span> dj dao</div>
-        <div class="tiny">
-          <span class="pill">djdao.music</span>
-          <a class="pill" href="#top" style="color:var(--muted)">back to top ↑</a>
-        </div>
-      </footer>
-    </div>
-  </div>
+    <section class="links-section">
+      <p class="links-label">listen</p>
+      <div class="links">
+        <a href="https://open.spotify.com/user/reynolds.tangsmith?si=c5c72ca961894ae5" class="link" target="_blank" rel="noopener noreferrer">
+          <svg class="link-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+          </svg>
+          <span>Spotify</span>
+        </a>
+        <a href="https://soundcloud.com/djdao_music" class="link" target="_blank" rel="noopener noreferrer">
+          <svg class="link-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M1.175 12.225c-.051 0-.094.046-.101.1l-.233 2.154.233 2.105c.007.058.05.098.101.098.05 0 .09-.04.099-.098l.255-2.105-.27-2.154c-.01-.06-.052-.1-.1-.1m-.899.828c-.06 0-.091.037-.104.094L0 14.479l.165 1.308c.014.057.045.094.09.094s.089-.037.099-.094l.19-1.308-.19-1.334c-.01-.057-.045-.09-.09-.09m1.83-1.229c-.061 0-.12.045-.12.104l-.21 2.563.225 2.458c0 .06.045.104.106.104.061 0 .12-.044.12-.104l.24-2.474-.24-2.547c0-.06-.059-.104-.12-.104m.945-.089c-.075 0-.135.06-.15.135l-.193 2.64.21 2.535c.016.075.075.135.149.135.075 0 .135-.06.15-.135l.225-2.535-.225-2.64c-.016-.075-.075-.135-.15-.135m.93-.116c-.09 0-.149.075-.165.165l-.195 2.756.195 2.52c.016.09.075.164.165.164.075 0 .149-.074.164-.164l.21-2.52-.21-2.756c-.015-.09-.074-.165-.164-.165m.96-.165c-.09 0-.165.09-.18.18l-.18 2.921.164 2.476c.015.105.09.18.181.18.09 0 .165-.075.18-.18l.195-2.476-.18-2.921c-.015-.09-.09-.18-.18-.18m1.005-.195c-.104 0-.194.09-.21.195l-.165 3.116.165 2.415c.015.12.105.21.21.21.12 0 .195-.09.21-.21l.18-2.415-.165-3.116c-.015-.105-.09-.195-.21-.195m1.02-.181c-.12 0-.21.09-.225.21l-.15 3.296.15 2.37c.015.12.105.21.225.21.12 0 .21-.09.225-.21l.165-2.37-.15-3.296c-.015-.12-.105-.21-.225-.21m1.065-.21c-.135 0-.24.105-.255.24l-.15 3.506.15 2.339c.015.135.12.24.255.24.135 0 .24-.105.255-.24l.165-2.339-.165-3.506c-.015-.135-.12-.24-.255-.24m1.065-.165c-.15 0-.255.12-.27.27l-.135 3.671.135 2.295c.015.15.12.27.27.27.135 0 .255-.12.27-.27l.15-2.295-.15-3.671c-.015-.15-.135-.27-.27-.27m1.065-.075c-.164 0-.284.135-.284.285l-.136 3.746.136 2.265c0 .165.12.285.284.285.165 0 .285-.12.3-.285l.15-2.265-.15-3.746c-.015-.15-.135-.285-.3-.285m1.11-.135c-.165 0-.3.135-.315.315l-.12 3.881.12 2.235c.015.165.15.315.315.315.165 0 .3-.15.315-.315l.135-2.235-.135-3.881c-.015-.18-.15-.315-.315-.315m1.095 0c-.18 0-.33.15-.33.33l-.12 3.881.12 2.19c0 .18.15.33.33.33.165 0 .315-.15.33-.33l.135-2.19-.135-3.881c-.015-.18-.165-.33-.33-.33m1.11-.135c-.195 0-.345.165-.36.36l-.12 4.016.12 2.145c.015.195.165.36.36.36.18 0 .345-.165.36-.36l.12-2.145-.12-4.016c-.015-.195-.18-.36-.36-.36m1.095.135c-.195 0-.36.165-.375.375l-.105 3.881.105 2.13c.015.21.18.375.375.375.195 0 .36-.165.375-.375l.12-2.13-.12-3.881c-.015-.21-.18-.375-.375-.375m1.125-.27c-.21 0-.375.18-.39.39l-.12 4.151.12 2.085c.015.21.18.39.39.39.195 0 .375-.18.39-.39l.135-2.085-.135-4.151c-.015-.21-.195-.39-.39-.39m1.095.405c-.21 0-.39.195-.405.405l-.09 3.746.09 2.085c.015.21.195.405.405.405.225 0 .39-.195.405-.405l.105-2.085-.105-3.746c-.015-.21-.18-.405-.405-.405m1.11-.045c-.225 0-.405.195-.42.42l-.105 3.791.105 2.04c.015.225.195.42.42.42.21 0 .405-.195.42-.42l.105-2.04-.105-3.791c-.015-.225-.21-.42-.42-.42m1.11.315c-.225 0-.42.21-.435.435l-.09 3.476.09 2.025c.015.225.21.435.435.435.225 0 .42-.21.435-.435l.09-2.025-.09-3.476c-.015-.225-.21-.435-.435-.435m1.125-.51c-.24 0-.435.21-.45.45l-.09 3.986.09 1.995c.015.24.21.45.45.45.225 0 .435-.21.45-.45l.09-1.995-.09-3.986c-.015-.24-.225-.45-.45-.45m1.095.72c-.24 0-.435.225-.45.465l-.075 3.266.075 1.98c.015.24.21.465.45.465.24 0 .435-.225.45-.465l.09-1.98-.09-3.266c-.015-.24-.21-.465-.45-.465m1.125-.93c-.255 0-.45.225-.465.48l-.09 4.196.09 1.935c.015.255.21.48.465.48.24 0 .45-.225.465-.48l.09-1.935-.09-4.196c-.015-.255-.225-.48-.465-.48m1.095 1.155c-.255 0-.465.24-.48.495l-.075 3.041.075 1.92c.015.255.225.495.48.495.255 0 .465-.24.48-.495l.075-1.92-.075-3.041c-.015-.255-.225-.495-.48-.495m1.125-1.59c-.27 0-.48.24-.495.51l-.09 4.631.09 1.875c.015.27.225.51.495.51.255 0 .48-.24.495-.51l.09-1.875-.09-4.631c-.015-.27-.24-.51-.495-.51m1.095 1.86c-.27 0-.495.255-.51.525l-.06 2.771.06 1.86c.015.27.24.525.51.525.27 0 .495-.255.51-.525l.075-1.86-.075-2.771c-.015-.27-.24-.525-.51-.525"/>
+          </svg>
+          <span>SoundCloud</span>
+        </a>
+        <a href="https://www.instagram.com/djdao.music" class="link" target="_blank" rel="noopener noreferrer">
+          <svg class="link-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+          </svg>
+          <span>Instagram</span>
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      <p class="footer-text">© dj dao 道 · an artist of 'ikigai city pty ltd'</p>
+    </footer>
+  </main>
 
   <script>
-    // tiny enhancement. safe, no dependencies
-    document.getElementById("y").textContent = new Date().getFullYear();
+    // Force video autoplay on mobile
+    const video = document.getElementById('logo-video');
+
+    function playVideo() {
+      if (video) {
+        video.play().catch(() => {});
+      }
+    }
+
+    // Try to play immediately
+    playVideo();
+
+    // Play on page visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) playVideo();
+    });
+
+    // Play on first user interaction (mobile fallback)
+    const startVideo = () => {
+      playVideo();
+      document.removeEventListener('touchstart', startVideo);
+      document.removeEventListener('scroll', startVideo);
+      document.removeEventListener('click', startVideo);
+    };
+    document.addEventListener('touchstart', startVideo, { once: true });
+    document.addEventListener('scroll', startVideo, { once: true });
+    document.addEventListener('click', startVideo, { once: true });
+
+    // Scroll-triggered reveal for concepts
+    const concepts = document.querySelectorAll('.concept');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const delay = parseInt(entry.target.dataset.delay) || 0;
+          setTimeout(() => {
+            entry.target.classList.add('revealed');
+          }, delay);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.3,
+      rootMargin: '0px 0px -50px 0px'
+    });
+
+    concepts.forEach(concept => observer.observe(concept));
   </script>
 </body>
 </html>
