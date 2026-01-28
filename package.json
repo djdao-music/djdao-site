@@ -1,0 +1,17 @@
+{
+  "name": "djdao-site",
+  "version": "1.0.0",
+  "description": "DJDAO Music website",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'",
+    "deploy": "vercel"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vercel": "^50.8.1"
+  }
+}
