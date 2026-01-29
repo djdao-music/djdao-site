@@ -56,25 +56,11 @@
     }
 
     .atmosphere::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background:
-        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(255,255,255,0.04) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,255,255,0.03) 0%, transparent 50%),
-        radial-gradient(ellipse 100% 80% at 50% 50%, rgba(255,255,255,0.015) 0%, transparent 70%);
-      animation: drift 30s ease-in-out infinite;
+      display: none;
     }
 
     .atmosphere::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%);
+      display: none;
     }
 
     @keyframes drift {
@@ -110,7 +96,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 140px 24px 40px;
+      padding: 180px 24px 40px;
       position: relative;
     }
 
@@ -171,7 +157,7 @@
     /* Typography */
     .title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(4rem, 15vw, 12rem);
+      font-size: clamp(4.44rem, 16.65vw, 13.32rem);
       font-weight: 300;
       letter-spacing: -0.02em;
       line-height: 0.9;
@@ -204,7 +190,7 @@
 
     .tagline {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.35rem, 3.7vw, 1.83rem);
+      font-size: clamp(1.5rem, 4.11vw, 2.03rem);
       font-weight: 300;
       font-style: italic;
       color: var(--white);
@@ -246,7 +232,7 @@
 
     .mantra-line {
       font-family: 'Outfit', sans-serif;
-      font-size: clamp(0.75rem, 2vw, 0.875rem);
+      font-size: clamp(0.83rem, 2.22vw, 0.97rem);
       font-weight: 400;
       letter-spacing: 0.3em;
       text-transform: uppercase;
@@ -264,7 +250,7 @@
 
     .statement {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-size: clamp(1.67rem, 5.55vw, 2.78rem);
       font-weight: 300;
       text-align: center;
       max-width: 700px;
@@ -284,7 +270,7 @@
 
     .statement-sub {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1rem, 3vw, 1.5rem);
+      font-size: clamp(1.11rem, 3.33vw, 1.67rem);
       font-weight: 300;
       font-style: italic;
       text-align: center;
@@ -297,7 +283,7 @@
 
     .dao-symbol {
       font-family: 'Ma Shan Zheng', cursive;
-      font-size: clamp(4rem, 12vw, 7rem);
+      font-size: clamp(4.44rem, 13.32vw, 7.77rem);
       color: var(--white);
       margin-top: 24px;
       display: block;
@@ -317,7 +303,7 @@
     }
 
     .links-label {
-      font-size: 0.9rem;
+      font-size: 1rem;
       letter-spacing: 0.4em;
       text-transform: lowercase;
       color: var(--white);
@@ -336,7 +322,7 @@
     }
 
     .link-emoji {
-      font-size: 1.25rem;
+      font-size: 1.39rem;
       line-height: 1;
     }
 
@@ -350,7 +336,7 @@
       border-radius: 100px;
       color: var(--white);
       text-decoration: none;
-      font-size: 0.875rem;
+      font-size: 0.97rem;
       font-weight: 400;
       letter-spacing: 0.05em;
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -434,10 +420,11 @@
 
     .explore-label {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 1rem;
+      font-size: 1.11rem;
       font-style: italic;
       letter-spacing: 0.2em;
       color: var(--white);
+      margin-top: 40px;
     }
 
     .explore-concepts {
@@ -450,7 +437,7 @@
 
     .concept {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      font-size: clamp(1rem, 2.22vw, 1.22rem);
       font-weight: 300;
       font-style: italic;
       letter-spacing: 0.15em;
@@ -538,7 +525,7 @@
       }
 
       .concept {
-        font-size: 0.8rem;
+        font-size: 0.89rem;
       }
     }
   </style>
