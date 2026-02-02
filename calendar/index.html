@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Rotary Year Calendar | dj dao</title>
+  <meta name="description" content="A circular dial representing an entire year at a glance. Track kairos events and memory marks.">
+
+  <meta property="og:title" content="Rotary Year Calendar">
+  <meta property="og:description" content="A precision instrument for temporal reflection">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#000000">
+
+  <!--
+  ═══════════════════════════════════════════════════════════════════════════════
+  ROTARY YEAR CALENDAR
+  ═══════════════════════════════════════════════════════════════════════════════
+
+  Inspired by Sir Tim Berners-Lee's mother's rotary wall calendar.
+
+  USAGE:
+  - Drag to rotate the dial
+  - Scroll wheel: 1 day (Shift+scroll: 7 days)
+  - Arrow keys: Left/Right = day, Up/Down = week, T = today
+  - Click day ticks or markers to select
+  - Click center readout to open editor
+
+  DATA STORAGE:
+  - localStorage key: `rotary-events-${year}`
+  - Data shape: Array<RotaryEvent>
+
+  TO EXTEND TO SERVER SYNC:
+  - Replace loadEvents() and saveEvents() with async API calls
+  - Add optimistic updates with rollback
+  - Consider offline-first with service worker
+
+  ═══════════════════════════════════════════════════════════════════════════════
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=JetBrains+Mono:wght@300;400&family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+
+  <style>
+    /*═══════════════════════════════════════════════════════════════════════════
+      CSS VARIABLES & RESET
+    ═══════════════════════════════════════════════════════════════════════════*/
+    :root {
+      --black: #000000;
+      --bg: #050505;
+      --white: #ffffff;
+      --silver: #a0a0a0;
+      --dim: rgba(255,255,255,0.4);
+      --faint: rgba(255,255,255,0.12);
+      --subtle: rgba(255,255,255,0.06);
+
+      /* Ring colors */
+      --tick-strong: rgba(255,255,255,0.9);
+      --tick-medium: rgba(255,255,255,0.45);
+      --tick-light: rgba(255,255,255,0.18);
+      --month-text: rgba(255,255,255,0.65);
+      --lunar-glow: rgba(200,210,255,0.6);
+      --kairos-dot: #f4d03f;
+      --memory-heat: rgba(220,80,60,0.7);
+      --pointer-color: #f4d03f;
+
+      /* Sizing */
+      --dial-size: min(85vw, 85vh, 600px);
+      --center-size: calc(var(--dial-size) * 0.28);
+
+      /* Editor */
+      --editor-width: 380px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      line-height: 1.5;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      LAYOUT
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .app {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .calendar-viewport {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .calendar-viewport.editor-open {
+      transform: translateX(calc(var(--editor-width) / -2));
+    }
+
+    @media (max-width: 900px) {
+      .calendar-viewport.editor-open {
+        transform: none;
+      }
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      GRAIN TEXTURE
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      HEADER
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 28px;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .header > * {
+      pointer-events: auto;
+    }
+
+    .back-link {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      color: var(--dim);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: var(--white);
+    }
+
+    .year-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .year-btn {
+      background: none;
+      border: 1px solid var(--faint);
+      color: var(--dim);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+
+    .year-btn:hover {
+      border-color: var(--tick-medium);
+      color: var(--white);
+    }
+
+    .year-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1rem;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      color: var(--white);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .control-btn {
+      background: none;
+      border: 1px solid var(--faint);
+      color: var(--dim);
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      transition: all 0.3s ease;
+    }
+
+    .control-btn:hover {
+      border-color: var(--tick-medium);
+      color: var(--white);
+    }
+
+    .control-btn.active {
+      border-color: var(--lunar-glow);
+      color: var(--lunar-glow);
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      DIAL CONTAINER
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .dial-container {
+      position: relative;
+      width: var(--dial-size);
+      height: var(--dial-size);
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .dial-container:active {
+      cursor: grabbing;
+    }
+
+    .dial-container:focus {
+      outline: none;
+    }
+
+    .dial-container:focus-visible .pointer {
+      filter: drop-shadow(0 0 8px var(--pointer-color));
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      SVG DIAL
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .dial-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .dial-group {
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dial-group {
+        transition: none;
+      }
+    }
+
+    .dial-container.dragging .dial-group {
+      transition: none;
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      POINTER
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .pointer {
+      position: absolute;
+      top: 2%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3px;
+      height: 12%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .pointer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 14px solid var(--pointer-color);
+      filter: drop-shadow(0 2px 4px rgba(244,208,63,0.4));
+    }
+
+    .pointer::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: calc(100% - 14px);
+      background: linear-gradient(180deg, var(--pointer-color) 0%, transparent 100%);
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      CENTER READOUT
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .center-readout {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: var(--center-size);
+      height: var(--center-size);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: radial-gradient(circle, rgba(10,10,10,0.95) 0%, rgba(5,5,5,0.9) 100%);
+      border: 1px solid var(--faint);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+      z-index: 5;
+    }
+
+    .center-readout:hover {
+      border-color: var(--tick-medium);
+    }
+
+    .center-weekday {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 400;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 4px;
+    }
+
+    .center-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .center-zodiac {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .zodiac-icon {
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .zodiac-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.8rem;
+      font-style: italic;
+      color: var(--silver);
+      letter-spacing: 0.05em;
+    }
+
+    .center-lunar {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .lunar-icon {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .lunar-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.65rem;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      EDITOR DRAWER
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .editor-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: var(--editor-width);
+      height: 100vh;
+      height: 100dvh;
+      background: rgba(8,8,8,0.98);
+      border-left: 1px solid var(--faint);
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .editor-drawer.open {
+      transform: translateX(0);
+    }
+
+    @media (max-width: 900px) {
+      .editor-drawer {
+        width: 100%;
+      }
+    }
+
+    .editor-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--faint);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .editor-date-info {
+      flex: 1;
+    }
+
+    .editor-weekday {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 4px;
+    }
+
+    .editor-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      color: var(--white);
+      letter-spacing: 0.05em;
+    }
+
+    .editor-lunar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .editor-lunar-icon {
+      font-size: 1rem;
+    }
+
+    .editor-lunar-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem;
+      color: var(--dim);
+    }
+
+    .editor-close {
+      background: none;
+      border: none;
+      color: var(--dim);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.2s ease;
+    }
+
+    .editor-close:hover {
+      color: var(--white);
+    }
+
+    .editor-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    .editor-section-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 12px;
+    }
+
+    .editor-entries {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .entry-card {
+      background: var(--subtle);
+      border: 1px solid var(--faint);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .entry-kind {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
+    .entry-kind.kairos {
+      background: rgba(244,208,63,0.15);
+      color: var(--kairos-dot);
+    }
+
+    .entry-kind.memory {
+      background: rgba(220,80,60,0.15);
+      color: var(--memory-heat);
+    }
+
+    .entry-delete {
+      background: none;
+      border: none;
+      color: var(--dim);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 4px;
+      opacity: 0.6;
+      transition: opacity 0.2s ease, color 0.2s ease;
+    }
+
+    .entry-delete:hover {
+      opacity: 1;
+      color: #e74c3c;
+    }
+
+    .entry-field {
+      margin-bottom: 12px;
+    }
+
+    .entry-field:last-child {
+      margin-bottom: 0;
+    }
+
+    .entry-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .entry-input {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--faint);
+      border-radius: 4px;
+      padding: 10px 12px;
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .entry-input:focus {
+      outline: none;
+      border-color: var(--tick-medium);
+    }
+
+    .entry-input::placeholder {
+      color: var(--dim);
+      opacity: 0.5;
+    }
+
+    textarea.entry-input {
+      min-height: 80px;
+      resize: vertical;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .intensity-slider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .intensity-slider input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--faint);
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .intensity-slider input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--white);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .intensity-slider input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    .intensity-slider input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: var(--white);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .intensity-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--silver);
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .add-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .add-btn {
+      flex: 1;
+      background: none;
+      border: 1px dashed var(--faint);
+      border-radius: 8px;
+      padding: 14px;
+      color: var(--dim);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .add-btn:hover {
+      border-color: var(--tick-medium);
+      color: var(--white);
+    }
+
+    .add-btn.kairos:hover {
+      border-color: var(--kairos-dot);
+      color: var(--kairos-dot);
+    }
+
+    .add-btn.memory:hover {
+      border-color: var(--memory-heat);
+      color: var(--memory-heat);
+    }
+
+    .add-icon {
+      font-size: 1.2rem;
+    }
+
+    .no-entries {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--dim);
+      font-style: italic;
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      TOOLTIP
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .tooltip {
+      position: fixed;
+      background: rgba(20,20,20,0.95);
+      border: 1px solid var(--faint);
+      border-radius: 6px;
+      padding: 10px 14px;
+      pointer-events: none;
+      z-index: 1000;
+      max-width: 220px;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tooltip-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--silver);
+      margin-bottom: 4px;
+    }
+
+    .tooltip-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      color: var(--white);
+    }
+
+    .tooltip-kind {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .tooltip-kind.kairos {
+      color: var(--kairos-dot);
+    }
+
+    .tooltip-kind.memory {
+      color: var(--memory-heat);
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      KEYBOARD HINTS
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .keyboard-hints {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--dim);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .hint-key {
+      background: var(--subtle);
+      border: 1px solid var(--faint);
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-right: 4px;
+    }
+
+    @media (max-width: 700px) {
+      .keyboard-hints {
+        display: none;
+      }
+    }
+
+    /*═══════════════════════════════════════════════════════════════════════════
+      ACCESSIBILITY
+    ═══════════════════════════════════════════════════════════════════════════*/
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+
+  <div class="app">
+    <header class="header">
+      <a href="/" class="back-link" aria-label="Return to home">&larr; djdao.music</a>
+
+      <nav class="year-nav" aria-label="Year navigation">
+        <button class="year-btn" id="prev-year" aria-label="Previous year">&lsaquo;</button>
+        <span class="year-display" id="year-display" aria-live="polite"></span>
+        <button class="year-btn" id="next-year" aria-label="Next year">&rsaquo;</button>
+      </nav>
+
+      <div class="controls">
+        <button class="control-btn" id="toggle-lunar" aria-pressed="true">Lunar</button>
+        <button class="control-btn" id="go-today">Today</button>
+      </div>
+    </header>
+
+    <main class="calendar-viewport" id="calendar-viewport">
+      <div
+        class="dial-container"
+        id="dial-container"
+        tabindex="0"
+        role="application"
+        aria-label="Rotary year calendar. Use arrow keys to navigate days and weeks."
+      >
+        <div class="pointer" aria-hidden="true"></div>
+
+        <svg
+          class="dial-svg"
+          id="dial-svg"
+          viewBox="-300 -300 600 600"
+          aria-hidden="true"
+        >
+          <defs>
+            <filter id="glow-kairos" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <filter id="glow-memory" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.5" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <g class="dial-group" id="dial-group">
+            <!-- Rings will be generated by JS -->
+          </g>
+        </svg>
+
+        <div
+          class="center-readout"
+          id="center-readout"
+          role="button"
+          tabindex="0"
+          aria-label="Selected date details. Click to edit events."
+        >
+          <span class="center-weekday" id="center-weekday"></span>
+          <span class="center-date" id="center-date"></span>
+          <div class="center-zodiac">
+            <span class="zodiac-icon" id="zodiac-icon"></span>
+            <span class="zodiac-name" id="zodiac-name"></span>
+          </div>
+          <div class="center-lunar" id="center-lunar">
+            <span class="lunar-icon" id="lunar-icon-center"></span>
+            <span class="lunar-name" id="lunar-name-center"></span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="editor-drawer" id="editor-drawer" aria-label="Event editor">
+      <header class="editor-header">
+        <div class="editor-date-info">
+          <div class="editor-weekday" id="editor-weekday"></div>
+          <div class="editor-date" id="editor-date"></div>
+          <div class="editor-lunar">
+            <span class="editor-lunar-icon" id="editor-lunar-icon"></span>
+            <span class="editor-lunar-text" id="editor-lunar-text"></span>
+          </div>
+        </div>
+        <button class="editor-close" id="editor-close" aria-label="Close editor">&times;</button>
+      </header>
+
+      <div class="editor-content">
+        <div class="editor-section-label">Entries</div>
+        <div class="editor-entries" id="editor-entries">
+          <!-- Entry cards rendered by JS -->
+        </div>
+
+        <div class="add-buttons">
+          <button class="add-btn kairos" id="add-kairos">
+            <span class="add-icon">+</span>
+            <span>Kairos Event</span>
+          </button>
+          <button class="add-btn memory" id="add-memory">
+            <span class="add-icon">+</span>
+            <span>Memory Mark</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="tooltip" id="tooltip" role="tooltip">
+    <div class="tooltip-date" id="tooltip-date"></div>
+    <div class="tooltip-title" id="tooltip-title"></div>
+    <div class="tooltip-kind" id="tooltip-kind"></div>
+  </div>
+
+  <div class="keyboard-hints" aria-hidden="true">
+    <span><span class="hint-key">&larr;&rarr;</span> day</span>
+    <span><span class="hint-key">&uarr;&darr;</span> week</span>
+    <span><span class="hint-key">T</span> today</span>
+    <span><span class="hint-key">Enter</span> edit</span>
+  </div>
+
+  <script>
+    /*═══════════════════════════════════════════════════════════════════════════
+      TYPE DEFINITIONS (for documentation)
+    ═══════════════════════════════════════════════════════════════════════════
+
+    type Kind = "kairos" | "memory"
+
+    type RotaryEvent = {
+      id: string
+      date: string        // yyyy-mm-dd
+      kind: Kind
+      title: string
+      note?: string
+      tags?: string[]
+      intensity?: 0|1|2|3|4|5
+      createdAt: string
+      updatedAt: string
+    }
+
+    ═══════════════════════════════════════════════════════════════════════════*/
+
+    (function() {
+      'use strict';
+
+      /*═════════════════════════════════════════════════════════════════════════
+        CONSTANTS & CONFIGURATION
+      ═════════════════════════════════════════════════════════════════════════*/
+      const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+      const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      // Ring radii (from center outward)
+      const R = {
+        memoryInner: 115,
+        memoryOuter: 140,
+        kairosInner: 145,
+        kairosOuter: 165,
+        lunarInner: 172,
+        lunarOuter: 185,
+        dayInner: 192,
+        dayOuter: 235,
+        monthInner: 245,
+        monthOuter: 280,
+      };
+
+      /*═════════════════════════════════════════════════════════════════════════
+        LUNAR PHASE CALCULATION
+      ═════════════════════════════════════════════════════════════════════════
+
+      Uses synodic month approximation calibrated against known astronomical data.
+
+      CALIBRATION ANCHOR:
+      - Full Moon: Feb 2, 2026 00:09 AEDT (Feb 1, 2026 13:09 UTC)
+      - Working backwards 14.765 days: New Moon was Jan 17, 2026 ~18:47 UTC
+
+      The lunar cycle is location-independent (same phase globally), but we
+      calculate for local noon to ensure consistent day-to-phase mapping.
+
+      Accuracy: Within ~1 day. Consumer-grade for reflection, not navigation.
+
+      To replace with precise astronomical ephemeris:
+      1. Import a library like astronomia or suncalc
+      2. Replace getMoonPhaseIndex() with actual ephemeris calculation
+      3. The rest of the code will work unchanged
+
+      ═════════════════════════════════════════════════════════════════════════*/
+      const SYNODIC_MONTH = 29.53058770576; // days
+
+      // Precise calibration: New Moon on Jan 17, 2026 at 18:47 UTC
+      // This makes Feb 2, 2026 (Sydney local date) show as Full Moon
+      const KNOWN_NEW_MOON = new Date(Date.UTC(2026, 0, 17, 18, 47));
+
+      // User's timezone offset - will be updated by geolocation or browser
+      // Default to Sydney AEDT (UTC+11)
+      let userTimezoneOffsetHours = 11;
+
+      const MOON_PHASES = [
+        { name: 'New Moon', icon: '🌑' },
+        { name: 'Waxing Crescent', icon: '🌒' },
+        { name: 'First Quarter', icon: '🌓' },
+        { name: 'Waxing Gibbous', icon: '🌔' },
+        { name: 'Full Moon', icon: '🌕' },
+        { name: 'Waning Gibbous', icon: '🌖' },
+        { name: 'Last Quarter', icon: '🌗' },
+        { name: 'Waning Crescent', icon: '🌘' },
+      ];
+
+      // Detect user's timezone from browser
+      function detectTimezone() {
+        // Get offset in minutes, convert to hours (note: getTimezoneOffset returns
+        // minutes BEHIND UTC, so we negate it)
+        const browserOffset = -new Date().getTimezoneOffset() / 60;
+        userTimezoneOffsetHours = browserOffset;
+
+        // Optionally request geolocation for more context (not needed for lunar calc
+        // but useful for future features)
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              // Store coordinates for potential future use (sunrise/sunset, etc.)
+              state.userLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+              };
+            },
+            () => {
+              // Geolocation denied or unavailable - use browser timezone only
+            },
+            { timeout: 5000, maximumAge: 86400000 } // Cache for 24h
+          );
+        }
+      }
+
+      function getMoonPhaseIndex(date) {
+        // Calculate for user's local noon
+        // Create date at noon local time (convert to UTC by subtracting offset)
+        const localNoonUTC = new Date(Date.UTC(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+          12 - userTimezoneOffsetHours,
+          0
+        ));
+
+        const daysSinceKnown = (localNoonUTC - KNOWN_NEW_MOON) / (1000 * 60 * 60 * 24);
+        const lunarAge = ((daysSinceKnown % SYNODIC_MONTH) + SYNODIC_MONTH) % SYNODIC_MONTH;
+
+        // Map age (0..29.53) to phase index (0..7)
+        // Each phase spans ~3.69 days
+        return Math.floor((lunarAge / SYNODIC_MONTH) * 8) % 8;
+      }
+
+      function getMoonPhase(date) {
+        const idx = getMoonPhaseIndex(date);
+        return MOON_PHASES[idx];
+      }
+
+      // Get lunar age in days for display purposes
+      function getLunarAge(date) {
+        const localNoonUTC = new Date(Date.UTC(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+          12 - userTimezoneOffsetHours,
+          0
+        ));
+        const daysSinceKnown = (localNoonUTC - KNOWN_NEW_MOON) / (1000 * 60 * 60 * 24);
+        return ((daysSinceKnown % SYNODIC_MONTH) + SYNODIC_MONTH) % SYNODIC_MONTH;
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        CHINESE ZODIAC CALCULATION
+      ═════════════════════════════════════════════════════════════════════════
+
+      The Chinese zodiac is based on a 12-year cycle. The year changes at
+      Chinese New Year (Lunar New Year), NOT January 1.
+
+      v1 behavior: Uses Gregorian year mapping for simplicity.
+      Shows tooltip note about Lunar New Year transition.
+
+      v1.1 enhancement: Include Lunar New Year dates dataset for precise mapping.
+
+      ═════════════════════════════════════════════════════════════════════════*/
+      const ZODIAC_ANIMALS = [
+        { name: 'Rat', icon: '🐀', element: 'Water' },
+        { name: 'Ox', icon: '🐂', element: 'Earth' },
+        { name: 'Tiger', icon: '🐅', element: 'Wood' },
+        { name: 'Rabbit', icon: '🐇', element: 'Wood' },
+        { name: 'Dragon', icon: '🐉', element: 'Earth' },
+        { name: 'Snake', icon: '🐍', element: 'Fire' },
+        { name: 'Horse', icon: '🐎', element: 'Fire' },
+        { name: 'Goat', icon: '🐐', element: 'Earth' },
+        { name: 'Monkey', icon: '🐒', element: 'Metal' },
+        { name: 'Rooster', icon: '🐓', element: 'Metal' },
+        { name: 'Dog', icon: '🐕', element: 'Earth' },
+        { name: 'Pig', icon: '🐖', element: 'Water' },
+      ];
+
+      // Reference: 2000 was Year of the Dragon (index 4)
+      const ZODIAC_REFERENCE_YEAR = 2000;
+      const ZODIAC_REFERENCE_INDEX = 4;
+
+      function getChineseZodiac(year) {
+        const offset = year - ZODIAC_REFERENCE_YEAR;
+        const idx = ((offset % 12) + 12 + ZODIAC_REFERENCE_INDEX) % 12;
+        return ZODIAC_ANIMALS[idx];
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        DATE UTILITIES
+      ═════════════════════════════════════════════════════════════════════════*/
+      function isLeapYear(year) {
+        return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+      }
+
+      function getDaysInYear(year) {
+        return isLeapYear(year) ? 366 : 365;
+      }
+
+      function getDaysInMonth(year, month) {
+        return new Date(year, month + 1, 0).getDate();
+      }
+
+      function getMonthStartIndices(year) {
+        const starts = [0];
+        let accumulated = 0;
+        for (let m = 0; m < 11; m++) {
+          accumulated += getDaysInMonth(year, m);
+          starts.push(accumulated);
+        }
+        return starts;
+      }
+
+      function dayIndexToDate(year, dayIndex) {
+        const d = new Date(year, 0, 1);
+        d.setDate(d.getDate() + dayIndex);
+        return d;
+      }
+
+      function dateToDayIndex(date) {
+        const year = date.getFullYear();
+        const startOfYear = new Date(year, 0, 1);
+        return Math.floor((date - startOfYear) / (1000 * 60 * 60 * 24));
+      }
+
+      function formatDateISO(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function parseDateISO(str) {
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        ANGLE CALCULATION
+      ═════════════════════════════════════════════════════════════════════════*/
+      function dayIndexToAngle(dayIndex, totalDays) {
+        // 0 = Jan 1 at top (12 o'clock = -90deg)
+        return -90 + (dayIndex / totalDays) * 360;
+      }
+
+      function angleToRadians(deg) {
+        return (deg * Math.PI) / 180;
+      }
+
+      function polarToCartesian(cx, cy, r, angleDeg) {
+        const rad = angleToRadians(angleDeg);
+        return {
+          x: cx + r * Math.cos(rad),
+          y: cy + r * Math.sin(rad),
+        };
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        DATA PERSISTENCE
+      ═════════════════════════════════════════════════════════════════════════*/
+      function getStorageKey(year) {
+        return `rotary-events-${year}`;
+      }
+
+      function loadEvents(year) {
+        try {
+          const data = localStorage.getItem(getStorageKey(year));
+          return data ? JSON.parse(data) : [];
+        } catch (e) {
+          console.error('Failed to load events:', e);
+          return [];
+        }
+      }
+
+      function saveEvents(year, events) {
+        try {
+          localStorage.setItem(getStorageKey(year), JSON.stringify(events));
+        } catch (e) {
+          console.error('Failed to save events:', e);
+        }
+      }
+
+      function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        STATE
+      ═════════════════════════════════════════════════════════════════════════*/
+      let state = {
+        year: new Date().getFullYear(),
+        selectedDayIndex: dateToDayIndex(new Date()),
+        events: [],
+        showLunar: true,
+        editorOpen: false,
+        isDragging: false,
+        dragStartAngle: 0,
+        dialRotation: 0,
+        prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        userLocation: null, // Will be set by geolocation if available
+      };
+
+      /*═════════════════════════════════════════════════════════════════════════
+        DOM ELEMENTS
+      ═════════════════════════════════════════════════════════════════════════*/
+      const $ = (id) => document.getElementById(id);
+
+      const elements = {
+        dialContainer: $('dial-container'),
+        dialGroup: $('dial-group'),
+        dialSvg: $('dial-svg'),
+        calendarViewport: $('calendar-viewport'),
+        centerReadout: $('center-readout'),
+        centerWeekday: $('center-weekday'),
+        centerDate: $('center-date'),
+        zodiacIcon: $('zodiac-icon'),
+        zodiacName: $('zodiac-name'),
+        lunarIconCenter: $('lunar-icon-center'),
+        lunarNameCenter: $('lunar-name-center'),
+        centerLunar: $('center-lunar'),
+        yearDisplay: $('year-display'),
+        prevYear: $('prev-year'),
+        nextYear: $('next-year'),
+        toggleLunar: $('toggle-lunar'),
+        goToday: $('go-today'),
+        editorDrawer: $('editor-drawer'),
+        editorWeekday: $('editor-weekday'),
+        editorDate: $('editor-date'),
+        editorLunarIcon: $('editor-lunar-icon'),
+        editorLunarText: $('editor-lunar-text'),
+        editorEntries: $('editor-entries'),
+        editorClose: $('editor-close'),
+        addKairos: $('add-kairos'),
+        addMemory: $('add-memory'),
+        tooltip: $('tooltip'),
+        tooltipDate: $('tooltip-date'),
+        tooltipTitle: $('tooltip-title'),
+        tooltipKind: $('tooltip-kind'),
+      };
+
+      /*═════════════════════════════════════════════════════════════════════════
+        SVG RENDERING
+      ═════════════════════════════════════════════════════════════════════════*/
+      function createSVGElement(tag, attrs = {}) {
+        const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        for (const [key, val] of Object.entries(attrs)) {
+          el.setAttribute(key, val);
+        }
+        return el;
+      }
+
+      function renderDial() {
+        const { year, showLunar, events } = state;
+        const totalDays = getDaysInYear(year);
+        const monthStarts = getMonthStartIndices(year);
+        const step = 360 / totalDays;
+
+        // Clear existing
+        elements.dialGroup.innerHTML = '';
+
+        // Create groups for each ring
+        const gMonth = createSVGElement('g', { class: 'month-ring' });
+        const gDay = createSVGElement('g', { class: 'day-ring' });
+        const gLunar = createSVGElement('g', { class: 'lunar-ring', opacity: showLunar ? 1 : 0 });
+        const gKairos = createSVGElement('g', { class: 'kairos-ring' });
+        const gMemory = createSVGElement('g', { class: 'memory-ring' });
+
+        // Index events by date
+        const eventsByDate = {};
+        events.forEach(ev => {
+          if (!eventsByDate[ev.date]) eventsByDate[ev.date] = [];
+          eventsByDate[ev.date].push(ev);
+        });
+
+        // Render month labels and boundaries
+        for (let m = 0; m < 12; m++) {
+          const startIdx = monthStarts[m];
+          const endIdx = m < 11 ? monthStarts[m + 1] : totalDays;
+          const midIdx = (startIdx + endIdx) / 2;
+          const midAngle = dayIndexToAngle(midIdx, totalDays);
+
+          // Month label
+          const labelR = (R.monthInner + R.monthOuter) / 2;
+          const pos = polarToCartesian(0, 0, labelR, midAngle);
+
+          const text = createSVGElement('text', {
+            x: pos.x,
+            y: pos.y,
+            fill: 'rgba(255,255,255,0.55)',
+            'font-family': "'Outfit', sans-serif",
+            'font-size': '9',
+            'font-weight': '400',
+            'letter-spacing': '0.12em',
+            'text-anchor': 'middle',
+            'dominant-baseline': 'middle',
+            transform: `rotate(${midAngle + 90}, ${pos.x}, ${pos.y})`,
+          });
+          text.textContent = MONTHS_SHORT[m].toUpperCase();
+          gMonth.appendChild(text);
+        }
+
+        // Render day ticks, lunar phases, and event markers
+        for (let i = 0; i < totalDays; i++) {
+          const angle = dayIndexToAngle(i, totalDays);
+          const date = dayIndexToDate(year, i);
+          const dateStr = formatDateISO(date);
+          const dayOfWeek = date.getDay();
+          const isMonthStart = monthStarts.includes(i);
+          const isWeekBoundary = i > 0 && i % 7 === 0;
+
+          // Day tick
+          let tickInner = R.dayInner;
+          let tickOuter = R.dayOuter;
+          let tickColor = 'rgba(255,255,255,0.12)';
+          let tickWidth = 1;
+
+          if (isMonthStart) {
+            tickInner = R.dayInner - 8;
+            tickOuter = R.dayOuter + 5;
+            tickColor = 'rgba(255,255,255,0.85)';
+            tickWidth = 1.5;
+          } else if (isWeekBoundary) {
+            tickInner = R.dayInner - 3;
+            tickOuter = R.dayOuter + 2;
+            tickColor = 'rgba(255,255,255,0.35)';
+            tickWidth = 1;
+          }
+
+          const p1 = polarToCartesian(0, 0, tickInner, angle);
+          const p2 = polarToCartesian(0, 0, tickOuter, angle);
+
+          const tick = createSVGElement('line', {
+            x1: p1.x,
+            y1: p1.y,
+            x2: p2.x,
+            y2: p2.y,
+            stroke: tickColor,
+            'stroke-width': tickWidth,
+            'stroke-linecap': 'round',
+            'data-day-index': i,
+            class: 'day-tick',
+            style: 'cursor: pointer;',
+          });
+          gDay.appendChild(tick);
+
+          // Lunar phase (every day, but subtle)
+          if (showLunar) {
+            const moonPhase = getMoonPhase(date);
+            const moonR = (R.lunarInner + R.lunarOuter) / 2;
+            const moonPos = polarToCartesian(0, 0, moonR, angle);
+
+            // Only render icons for major phases (new, first quarter, full, last quarter)
+            // or every 3rd day for other phases to reduce clutter
+            const phaseIdx = getMoonPhaseIndex(date);
+            const isMajorPhase = phaseIdx === 0 || phaseIdx === 2 || phaseIdx === 4 || phaseIdx === 6;
+
+            if (isMajorPhase || i % 3 === 0) {
+              const moonText = createSVGElement('text', {
+                x: moonPos.x,
+                y: moonPos.y,
+                fill: 'rgba(200,210,255,0.45)',
+                'font-size': isMajorPhase ? '7' : '5',
+                'text-anchor': 'middle',
+                'dominant-baseline': 'middle',
+                style: 'pointer-events: none;',
+              });
+              moonText.textContent = moonPhase.icon;
+              gLunar.appendChild(moonText);
+            }
+          }
+
+          // Event markers
+          const dayEvents = eventsByDate[dateStr] || [];
+          const kairosEvents = dayEvents.filter(e => e.kind === 'kairos');
+          const memoryEvents = dayEvents.filter(e => e.kind === 'memory');
+
+          // Kairos markers (outward dots)
+          if (kairosEvents.length > 0) {
+            const maxIntensity = Math.max(...kairosEvents.map(e => e.intensity || 1));
+            const dotR = R.kairosInner + (maxIntensity / 5) * (R.kairosOuter - R.kairosInner);
+            const dotSize = 3 + maxIntensity * 0.8;
+            const dotPos = polarToCartesian(0, 0, dotR, angle);
+
+            const dot = createSVGElement('circle', {
+              cx: dotPos.x,
+              cy: dotPos.y,
+              r: dotSize,
+              fill: '#f4d03f',
+              filter: 'url(#glow-kairos)',
+              'data-day-index': i,
+              'data-events': JSON.stringify(kairosEvents.map(e => ({ title: e.title, kind: e.kind }))),
+              class: 'kairos-marker',
+              style: 'cursor: pointer;',
+            });
+            gKairos.appendChild(dot);
+          }
+
+          // Memory markers (inner heat strokes)
+          if (memoryEvents.length > 0) {
+            const totalIntensity = memoryEvents.reduce((sum, e) => sum + (e.intensity || 1), 0);
+            const avgIntensity = Math.min(totalIntensity, 5);
+            const strokeLength = 8 + avgIntensity * 4;
+            const strokeOpacity = 0.25 + avgIntensity * 0.12;
+
+            const mP1 = polarToCartesian(0, 0, R.memoryOuter, angle);
+            const mP2 = polarToCartesian(0, 0, R.memoryOuter - strokeLength, angle);
+
+            const stroke = createSVGElement('line', {
+              x1: mP1.x,
+              y1: mP1.y,
+              x2: mP2.x,
+              y2: mP2.y,
+              stroke: `rgba(220,80,60,${strokeOpacity})`,
+              'stroke-width': 2 + avgIntensity * 0.5,
+              'stroke-linecap': 'round',
+              filter: 'url(#glow-memory)',
+              'data-day-index': i,
+              'data-events': JSON.stringify(memoryEvents.map(e => ({ title: e.title, kind: e.kind }))),
+              class: 'memory-marker',
+              style: 'cursor: pointer;',
+            });
+            gMemory.appendChild(stroke);
+          }
+        }
+
+        // Append all groups (order matters for z-index)
+        elements.dialGroup.appendChild(gMemory);
+        elements.dialGroup.appendChild(gKairos);
+        elements.dialGroup.appendChild(gLunar);
+        elements.dialGroup.appendChild(gDay);
+        elements.dialGroup.appendChild(gMonth);
+
+        // Update dial rotation
+        updateDialRotation();
+      }
+
+      function updateDialRotation() {
+        const totalDays = getDaysInYear(state.year);
+        const step = 360 / totalDays;
+        const rotation = -state.selectedDayIndex * step;
+        state.dialRotation = rotation;
+        elements.dialGroup.setAttribute('transform', `rotate(${rotation})`);
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        CENTER READOUT
+      ═════════════════════════════════════════════════════════════════════════*/
+      function updateCenterReadout() {
+        const date = dayIndexToDate(state.year, state.selectedDayIndex);
+        const weekday = WEEKDAYS[date.getDay()];
+        const dateStr = formatDateISO(date);
+        const zodiac = getChineseZodiac(state.year);
+        const lunar = getMoonPhase(date);
+
+        elements.centerWeekday.textContent = weekday;
+        elements.centerDate.textContent = dateStr;
+        elements.zodiacIcon.textContent = zodiac.icon;
+        elements.zodiacName.textContent = `Year of the ${zodiac.name}`;
+        elements.lunarIconCenter.textContent = lunar.icon;
+        elements.lunarNameCenter.textContent = lunar.name;
+        elements.centerLunar.style.display = state.showLunar ? 'flex' : 'none';
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        YEAR NAVIGATION
+      ═════════════════════════════════════════════════════════════════════════*/
+      function updateYearDisplay() {
+        elements.yearDisplay.textContent = state.year;
+      }
+
+      function setYear(newYear) {
+        state.year = newYear;
+        state.events = loadEvents(newYear);
+
+        // Adjust selected day if needed (leap year edge case)
+        const totalDays = getDaysInYear(newYear);
+        if (state.selectedDayIndex >= totalDays) {
+          state.selectedDayIndex = totalDays - 1;
+        }
+
+        updateYearDisplay();
+        renderDial();
+        updateCenterReadout();
+        if (state.editorOpen) {
+          renderEditorEntries();
+        }
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        EDITOR
+      ═════════════════════════════════════════════════════════════════════════*/
+      function openEditor() {
+        state.editorOpen = true;
+        elements.editorDrawer.classList.add('open');
+        elements.calendarViewport.classList.add('editor-open');
+        renderEditorEntries();
+      }
+
+      function closeEditor() {
+        state.editorOpen = false;
+        elements.editorDrawer.classList.remove('open');
+        elements.calendarViewport.classList.remove('editor-open');
+      }
+
+      function renderEditorEntries() {
+        const date = dayIndexToDate(state.year, state.selectedDayIndex);
+        const dateStr = formatDateISO(date);
+        const weekday = WEEKDAYS[date.getDay()];
+        const lunar = getMoonPhase(date);
+
+        elements.editorWeekday.textContent = weekday;
+        elements.editorDate.textContent = dateStr;
+        elements.editorLunarIcon.textContent = lunar.icon;
+        elements.editorLunarText.textContent = lunar.name;
+
+        const dayEvents = state.events.filter(e => e.date === dateStr);
+
+        if (dayEvents.length === 0) {
+          elements.editorEntries.innerHTML = `
+            <div class="no-entries">No entries for this day.<br>Add a kairos event or memory mark below.</div>
+          `;
+          return;
+        }
+
+        elements.editorEntries.innerHTML = dayEvents.map(event => `
+          <div class="entry-card" data-id="${event.id}">
+            <div class="entry-header">
+              <span class="entry-kind ${event.kind}">${event.kind}</span>
+              <button class="entry-delete" data-id="${event.id}" aria-label="Delete entry">&times;</button>
+            </div>
+            <div class="entry-field">
+              <label class="entry-label">Title</label>
+              <input
+                type="text"
+                class="entry-input entry-title"
+                data-id="${event.id}"
+                value="${escapeHtml(event.title)}"
+                placeholder="Enter title..."
+              >
+            </div>
+            <div class="entry-field">
+              <label class="entry-label">Note</label>
+              <textarea
+                class="entry-input entry-note"
+                data-id="${event.id}"
+                placeholder="Add notes..."
+              >${escapeHtml(event.note || '')}</textarea>
+            </div>
+            <div class="entry-field">
+              <label class="entry-label">Intensity</label>
+              <div class="intensity-slider">
+                <input
+                  type="range"
+                  min="0"
+                  max="5"
+                  value="${event.intensity || 0}"
+                  class="entry-intensity"
+                  data-id="${event.id}"
+                >
+                <span class="intensity-value">${event.intensity || 0}</span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        // Attach event listeners
+        elements.editorEntries.querySelectorAll('.entry-delete').forEach(btn => {
+          btn.addEventListener('click', () => deleteEvent(btn.dataset.id));
+        });
+
+        elements.editorEntries.querySelectorAll('.entry-title').forEach(input => {
+          input.addEventListener('input', (e) => updateEvent(e.target.dataset.id, { title: e.target.value }));
+        });
+
+        elements.editorEntries.querySelectorAll('.entry-note').forEach(textarea => {
+          textarea.addEventListener('input', (e) => updateEvent(e.target.dataset.id, { note: e.target.value }));
+        });
+
+        elements.editorEntries.querySelectorAll('.entry-intensity').forEach(slider => {
+          slider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            e.target.nextElementSibling.textContent = val;
+            updateEvent(e.target.dataset.id, { intensity: val });
+          });
+        });
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function addEvent(kind) {
+        const date = dayIndexToDate(state.year, state.selectedDayIndex);
+        const dateStr = formatDateISO(date);
+        const now = new Date().toISOString();
+
+        const newEvent = {
+          id: generateId(),
+          date: dateStr,
+          kind: kind,
+          title: '',
+          note: '',
+          tags: [],
+          intensity: kind === 'kairos' ? 3 : 2,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        state.events.push(newEvent);
+        saveEvents(state.year, state.events);
+        renderDial();
+        renderEditorEntries();
+
+        // Focus the new entry's title input
+        setTimeout(() => {
+          const input = elements.editorEntries.querySelector(`[data-id="${newEvent.id}"].entry-title`);
+          if (input) input.focus();
+        }, 50);
+      }
+
+      function updateEvent(id, updates) {
+        const event = state.events.find(e => e.id === id);
+        if (!event) return;
+
+        Object.assign(event, updates, { updatedAt: new Date().toISOString() });
+        saveEvents(state.year, state.events);
+
+        // Re-render dial if intensity changed (affects visual)
+        if ('intensity' in updates) {
+          renderDial();
+        }
+      }
+
+      function deleteEvent(id) {
+        state.events = state.events.filter(e => e.id !== id);
+        saveEvents(state.year, state.events);
+        renderDial();
+        renderEditorEntries();
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        TOOLTIP
+      ═════════════════════════════════════════════════════════════════════════*/
+      function showTooltip(x, y, dayIndex, eventsData) {
+        const date = dayIndexToDate(state.year, dayIndex);
+        const dateStr = formatDateISO(date);
+
+        elements.tooltipDate.textContent = `${WEEKDAYS_SHORT[date.getDay()]}, ${dateStr}`;
+
+        if (eventsData && eventsData.length > 0) {
+          const firstEvent = eventsData[0];
+          elements.tooltipTitle.textContent = firstEvent.title || '(untitled)';
+          elements.tooltipKind.textContent = firstEvent.kind;
+          elements.tooltipKind.className = `tooltip-kind ${firstEvent.kind}`;
+          elements.tooltipKind.style.display = 'block';
+
+          if (eventsData.length > 1) {
+            elements.tooltipTitle.textContent += ` (+${eventsData.length - 1} more)`;
+          }
+        } else {
+          elements.tooltipTitle.textContent = '';
+          elements.tooltipKind.style.display = 'none';
+        }
+
+        // Position tooltip
+        const rect = elements.tooltip.getBoundingClientRect();
+        let left = x + 15;
+        let top = y + 15;
+
+        if (left + rect.width > window.innerWidth - 20) {
+          left = x - rect.width - 15;
+        }
+        if (top + rect.height > window.innerHeight - 20) {
+          top = y - rect.height - 15;
+        }
+
+        elements.tooltip.style.left = `${left}px`;
+        elements.tooltip.style.top = `${top}px`;
+        elements.tooltip.classList.add('visible');
+      }
+
+      function hideTooltip() {
+        elements.tooltip.classList.remove('visible');
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        INTERACTION HANDLERS
+      ═════════════════════════════════════════════════════════════════════════*/
+      function getAngleFromEvent(e) {
+        const rect = elements.dialContainer.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return Math.atan2(clientY - cy, clientX - cx) * (180 / Math.PI);
+      }
+
+      function selectDay(dayIndex) {
+        const totalDays = getDaysInYear(state.year);
+        state.selectedDayIndex = ((dayIndex % totalDays) + totalDays) % totalDays;
+        updateDialRotation();
+        updateCenterReadout();
+        if (state.editorOpen) {
+          renderEditorEntries();
+        }
+      }
+
+      function handleDragStart(e) {
+        if (e.target.closest('.center-readout')) return;
+
+        state.isDragging = true;
+        state.dragStartAngle = getAngleFromEvent(e);
+        elements.dialContainer.classList.add('dragging');
+        e.preventDefault();
+      }
+
+      function handleDragMove(e) {
+        if (!state.isDragging) return;
+
+        const currentAngle = getAngleFromEvent(e);
+        let delta = currentAngle - state.dragStartAngle;
+
+        // Handle angle wrap-around
+        if (delta > 180) delta -= 360;
+        if (delta < -180) delta += 360;
+
+        const totalDays = getDaysInYear(state.year);
+        const step = 360 / totalDays;
+        const dayDelta = Math.round(delta / step);
+
+        if (dayDelta !== 0) {
+          selectDay(state.selectedDayIndex - dayDelta);
+          state.dragStartAngle = currentAngle;
+        }
+
+        e.preventDefault();
+      }
+
+      function handleDragEnd() {
+        state.isDragging = false;
+        elements.dialContainer.classList.remove('dragging');
+      }
+
+      function handleWheel(e) {
+        e.preventDefault();
+        const delta = e.shiftKey ? 7 : 1;
+        const direction = e.deltaY > 0 ? 1 : -1;
+        selectDay(state.selectedDayIndex + delta * direction);
+      }
+
+      function handleKeyDown(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch (e.key) {
+          case 'ArrowLeft':
+            selectDay(state.selectedDayIndex - 1);
+            e.preventDefault();
+            break;
+          case 'ArrowRight':
+            selectDay(state.selectedDayIndex + 1);
+            e.preventDefault();
+            break;
+          case 'ArrowUp':
+            selectDay(state.selectedDayIndex - 7);
+            e.preventDefault();
+            break;
+          case 'ArrowDown':
+            selectDay(state.selectedDayIndex + 7);
+            e.preventDefault();
+            break;
+          case 't':
+          case 'T':
+            goToToday();
+            e.preventDefault();
+            break;
+          case 'Enter':
+            if (document.activeElement === elements.dialContainer ||
+                document.activeElement === elements.centerReadout) {
+              openEditor();
+              e.preventDefault();
+            }
+            break;
+          case 'Escape':
+            if (state.editorOpen) {
+              closeEditor();
+              elements.dialContainer.focus();
+              e.preventDefault();
+            }
+            break;
+        }
+      }
+
+      function handleClick(e) {
+        const target = e.target;
+
+        // Day tick click
+        if (target.classList.contains('day-tick')) {
+          const dayIndex = parseInt(target.dataset.dayIndex);
+          selectDay(dayIndex);
+          return;
+        }
+
+        // Kairos/Memory marker click
+        if (target.classList.contains('kairos-marker') || target.classList.contains('memory-marker')) {
+          const dayIndex = parseInt(target.dataset.dayIndex);
+          selectDay(dayIndex);
+          openEditor();
+          return;
+        }
+      }
+
+      function handleMouseOver(e) {
+        const target = e.target;
+
+        if (target.classList.contains('day-tick') ||
+            target.classList.contains('kairos-marker') ||
+            target.classList.contains('memory-marker')) {
+          const dayIndex = parseInt(target.dataset.dayIndex);
+          let eventsData = null;
+
+          if (target.dataset.events) {
+            try {
+              eventsData = JSON.parse(target.dataset.events);
+            } catch (err) {}
+          }
+
+          showTooltip(e.clientX, e.clientY, dayIndex, eventsData);
+        }
+      }
+
+      function handleMouseOut(e) {
+        const target = e.target;
+        if (target.classList.contains('day-tick') ||
+            target.classList.contains('kairos-marker') ||
+            target.classList.contains('memory-marker')) {
+          hideTooltip();
+        }
+      }
+
+      function goToToday() {
+        const today = new Date();
+        const todayYear = today.getFullYear();
+
+        if (todayYear !== state.year) {
+          setYear(todayYear);
+        }
+
+        state.selectedDayIndex = dateToDayIndex(today);
+        updateDialRotation();
+        updateCenterReadout();
+        if (state.editorOpen) {
+          renderEditorEntries();
+        }
+      }
+
+      /*═════════════════════════════════════════════════════════════════════════
+        INITIALIZATION
+      ═════════════════════════════════════════════════════════════════════════*/
+      function init() {
+        // Detect user timezone from browser (and request geolocation)
+        detectTimezone();
+
+        // Load events for current year
+        state.events = loadEvents(state.year);
+
+        // Initial render
+        updateYearDisplay();
+        renderDial();
+        updateCenterReadout();
+
+        // Event listeners - Dial interaction
+        elements.dialContainer.addEventListener('mousedown', handleDragStart);
+        elements.dialContainer.addEventListener('touchstart', handleDragStart, { passive: false });
+        window.addEventListener('mousemove', handleDragMove);
+        window.addEventListener('touchmove', handleDragMove, { passive: false });
+        window.addEventListener('mouseup', handleDragEnd);
+        window.addEventListener('touchend', handleDragEnd);
+        elements.dialContainer.addEventListener('wheel', handleWheel, { passive: false });
+        elements.dialSvg.addEventListener('click', handleClick);
+        elements.dialSvg.addEventListener('mouseover', handleMouseOver);
+        elements.dialSvg.addEventListener('mouseout', handleMouseOut);
+
+        // Keyboard
+        document.addEventListener('keydown', handleKeyDown);
+
+        // Center readout click
+        elements.centerReadout.addEventListener('click', openEditor);
+        elements.centerReadout.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            openEditor();
+            e.preventDefault();
+          }
+        });
+
+        // Year navigation
+        elements.prevYear.addEventListener('click', () => setYear(state.year - 1));
+        elements.nextYear.addEventListener('click', () => setYear(state.year + 1));
+
+        // Controls
+        elements.toggleLunar.addEventListener('click', () => {
+          state.showLunar = !state.showLunar;
+          elements.toggleLunar.classList.toggle('active', state.showLunar);
+          elements.toggleLunar.setAttribute('aria-pressed', state.showLunar);
+          renderDial();
+          updateCenterReadout();
+        });
+
+        elements.goToday.addEventListener('click', goToToday);
+
+        // Editor
+        elements.editorClose.addEventListener('click', closeEditor);
+        elements.addKairos.addEventListener('click', () => addEvent('kairos'));
+        elements.addMemory.addEventListener('click', () => addEvent('memory'));
+
+        // Focus dial on load
+        elements.dialContainer.focus();
+
+        // Listen for reduced motion preference changes
+        window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
+          state.prefersReducedMotion = e.matches;
+        });
+      }
+
+      // Start
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>
