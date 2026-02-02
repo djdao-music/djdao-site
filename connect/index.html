@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>connect · dj dao</title>
+  <meta name="description" content="Connect with dj dao for bookings and enquiries. Consciousness in motion.">
+
+  <meta property="og:title" content="connect · dj dao">
+  <meta property="og:description" content="bookings and enquiries">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#000000">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Ma+Shan+Zheng&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --off-white: #f8f8f8;
+      --silver: #c0c0c0;
+      --dim: rgba(255,255,255,0.5);
+      --faint: rgba(255,255,255,0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* Grain texture overlay */
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    .main {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Back link */
+    .back-link {
+      position: fixed;
+      top: 32px;
+      left: 32px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      transition: color 0.3s ease;
+      z-index: 100;
+    }
+
+    .back-link:hover {
+      color: var(--white);
+    }
+
+    /* Rotating yin yang */
+    .yin-yang {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 0;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 0.1s forwards;
+    }
+
+    .yin-yang svg {
+      width: 100%;
+      height: 100%;
+      animation: rotate 12s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Hero */
+    .hero {
+      padding: 110px 24px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3.05rem, 9.8vw, 5.5rem);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      margin-bottom: -4px;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 0.2s forwards;
+    }
+
+    .page-subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.34rem, 3.7vw, 1.71rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--dim);
+      letter-spacing: 0.02em;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 0.4s forwards;
+    }
+
+    /* Form section */
+    .form-section {
+      flex: 1;
+      padding: 24px 24px 80px;
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 0.6s forwards;
+    }
+
+    .booking-form {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .form-input,
+    .form-textarea,
+    .form-select {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 16px 20px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--white);
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: rgba(255,255,255,0.3);
+    }
+
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .form-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 48px;
+    }
+
+    .form-select option {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .form-textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .submit-btn {
+      margin-top: -4px;
+      padding: 18px 32px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 100px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      color: var(--white);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .submit-btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3), 0 0 60px rgba(255,255,255,0.03);
+    }
+
+    .submit-btn:hover::before {
+      opacity: 1;
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 24px;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: auto;
+    }
+
+    .footer-text {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+    }
+
+    .footer-text a {
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-text a:hover {
+      color: var(--white);
+    }
+
+    /* Success message (shown after form submission) */
+    .success-message {
+      text-align: center;
+      padding: 60px 24px;
+    }
+
+    .success-message h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 300;
+      margin-bottom: 16px;
+    }
+
+    .success-message p {
+      color: var(--dim);
+      font-style: italic;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Mobile refinements */
+    @media (max-width: 600px) {
+      .back-link {
+        top: 20px;
+        left: 20px;
+      }
+
+      .hero {
+        padding: 100px 24px 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+
+  <a href="/" class="back-link">&larr; back</a>
+
+  <main class="main">
+    <section class="hero">
+      <div class="yin-yang">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M12 1a11 11 0 0 0 0 22 5.5 5.5 0 0 0 0-11 5.5 5.5 0 0 1 0-11z" fill="currentColor"/>
+          <circle cx="12" cy="6.5" r="1.8" fill="currentColor"/>
+          <circle cx="12" cy="17.5" r="1.8" fill="#000"/>
+        </svg>
+      </div>
+      <h1 class="page-title">connect</h1>
+      <p class="page-subtitle">let's create something magical together</p>
+    </section>
+
+    <section class="form-section">
+      <!-- Replace YOUR_FORM_ID with your Formspree form ID -->
+      <form class="booking-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="name">Name</label>
+            <input class="form-input" type="text" id="name" name="name" placeholder="your name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-input" type="email" id="email" name="email" placeholder="your@email.com" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="date">Experience Date</label>
+            <input class="form-input" type="date" id="date" name="date">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="event-type">Experience Type</label>
+            <select class="form-select" id="event-type" name="event_type">
+              <option value="" disabled selected>select</option>
+              <option value="festival">Festival</option>
+              <option value="wedding">Wedding</option>
+              <option value="wellness">Wellness</option>
+              <option value="boat-party">Boat Party</option>
+              <option value="private-party">Private Party</option>
+              <option value="startup-corporate">Startup / Corporate Event</option>
+              <option value="club-night">Club Night</option>
+              <option value="funeral">Funeral</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="location">Venue / Location</label>
+            <input class="form-input" type="text" id="location" name="location" placeholder="venue name, city, or TBC">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="budget">Budget</label>
+            <input class="form-input" type="text" id="budget" name="budget" placeholder="$$$ amount">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="message">Tell me about your experience</label>
+          <textarea class="form-textarea" id="message" name="message" placeholder="what's the vibe? any special requests, music genres or details..." required></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">send enquiry 🎵</button>
+      </form>
+    </section>
+
+    <footer>
+      <p class="footer-text">© <a href="/">dj dao</a> 道 · an artist of 'ikigai city pty ltd'</p>
+    </footer>
+  </main>
+</body>
+</html>
