@@ -190,14 +190,14 @@
 
     .tagline {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.5rem, 4.11vw, 2.03rem);
+      font-size: clamp(1.88rem, 5.15vw, 2.54rem);
       font-weight: 300;
       font-style: italic;
       color: var(--white);
       text-align: center;
       max-width: 500px;
       letter-spacing: 0.02em;
-      margin-bottom: 0;
+      margin-bottom: 40px;
       opacity: 0;
       animation: fadeUp 1.2s ease-out 0.6s forwards;
     }
@@ -214,7 +214,7 @@
 
     /* Philosophy section */
     .philosophy {
-      padding: 40px 24px 60px;
+      padding: 0 24px 60px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -228,15 +228,17 @@
       gap: 24px;
       opacity: 0;
       animation: fadeUp 1.2s ease-out 1s forwards;
+      margin-top: 20px;
+      margin-bottom: 0;
     }
 
     .mantra-line {
       font-family: 'Outfit', sans-serif;
-      font-size: clamp(0.83rem, 2.22vw, 0.97rem);
+      font-size: clamp(1.11rem, 2.98vw, 1.30rem);
       font-weight: 400;
       letter-spacing: 0.3em;
       text-transform: uppercase;
-      color: var(--dim);
+      color: rgba(255,255,255,0.7);
       text-align: center;
       position: relative;
     }
@@ -246,6 +248,44 @@
       content: '·';
       margin: 0 1.5em;
       opacity: 0.4;
+    }
+
+    .present-moment {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.46rem, 3.92vw, 2.02rem);
+      font-weight: 300;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      line-height: 2;
+      margin-top: 60px;
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeUp 1.2s ease-out 1.2s forwards;
+    }
+
+    .glow-text {
+      color: var(--white);
+      animation: mysticGlow 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes mysticGlow {
+      0%, 100% {
+        text-shadow:
+          0 0 8px rgba(255,255,255,0.25),
+          0 0 16px rgba(255,255,255,0.12),
+          0 0 30px rgba(255,255,255,0.06);
+        opacity: 0.7;
+      }
+      50% {
+        text-shadow:
+          0 0 20px rgba(255,255,255,0.9),
+          0 0 40px rgba(255,255,255,0.7),
+          0 0 70px rgba(255,255,255,0.5),
+          0 0 110px rgba(255,255,255,0.3),
+          0 0 160px rgba(255,255,255,0.15),
+          0 0 220px rgba(255,255,255,0.05);
+        opacity: 1;
+      }
     }
 
     .statement {
@@ -415,16 +455,16 @@
       flex-direction: column;
       align-items: center;
       gap: 24px;
-      padding: 120px 24px 160px;
+      padding: 120px 24px 80px;
     }
 
     .explore-label {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 1.11rem;
+      font-size: 1.55rem;
       font-style: italic;
       letter-spacing: 0.2em;
       color: var(--white);
-      margin-top: 40px;
+      margin-top: 60px;
     }
 
     .explore-concepts {
@@ -433,11 +473,12 @@
       align-items: center;
       gap: 16px;
       margin-top: 20px;
+      margin-bottom: 45px;
     }
 
     .concept {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1rem, 2.22vw, 1.22rem);
+      font-size: clamp(1.4rem, 3.11vw, 1.71rem);
       font-weight: 300;
       font-style: italic;
       letter-spacing: 0.15em;
@@ -525,7 +566,7 @@
       }
 
       .concept {
-        font-size: 0.89rem;
+        font-size: 1.25rem;
       }
     }
   </style>
@@ -560,21 +601,30 @@
     </section>
 
     <section class="explore-section">
+      <div class="mantra">
+        <p class="mantra-line">a dj</p>
+        <p class="mantra-line">for all people</p>
+        <p class="mantra-line">for all lands</p>
+      </div>
+
+      <p class="present-moment">
+        bringing you back to the<br>
+        <span class="glow-text">Present Moment</span>
+      </p>
+
+      <div class="scroll-line"></div>
+
       <span class="explore-label">explore the</span>
       <div class="explore-concepts">
         <span class="concept" data-delay="0">Past and Future</span>
         <span class="concept" data-delay="200">East and West</span>
         <span class="concept" data-delay="400">as One</span>
       </div>
+
       <div class="scroll-line"></div>
     </section>
 
     <section class="philosophy">
-      <div class="mantra">
-        <p class="mantra-line">a dj for all people</p>
-        <p class="mantra-line">for all lands</p>
-      </div>
-
       <p class="statement">
         <em>music is medicine</em><br>
         <em>dance is medicine</em>
